@@ -1,0 +1,5 @@
+250;Pickles Em Conserva 500g;8;8.14;20250718;
+69;Arroz Doce 80g;70;5.11;20190725;
+74;Banana Split Cebola  100g;74;87.40;6422236;
+85;Cebola;4;85.40;20201015;
+444;Cenoura;45;5.00;20250418;
