@@ -1,15 +1,14 @@
 -> Abrir os arquivos de clientes, vendas, produtos e empregados.
 
 -> Load
-    -> Carregar os clientes em uma fila de prioridades dinâmicas.
+    -> Carregar os clientes em uma fila de prioridades dinâmica.
     -> Carregar os produtos em uma árvore de listas.
-    -> 
 
 -> Vender Produto
     -> Ler informações sobre o produto que o usuário digitar
     -> Buscar essas informações na árvore de listas e reduzir os números de elementos especificados pelo nó da lista (e, se necessário, excluir o nó).
     -> Checar sobre cpf na nota.
-        -> Se já estiver cadastrado, oferecer promoção de 10%.
+        -> Se já estiver cadastrado e cumprir condição, oferecer promoção de 10%.
         -> Senão, registrar como anônimo
     -> Finalizar venda.
 
@@ -18,4 +17,12 @@
         -> A partir do "preço, código e descrição", verificar registro do produto.
             -> Se ainda não tiver registrado, registrar.
             -> Se já tiver registrado, adicionar um elemento à lista de elementos.
+-> Registrar funcionário.
+
+-> Gerar relatório temporário
+
 -> Finalizar dia de venda
+    -> "Descarregar" o conteúdo das árvores nos arquivos de clientes e produtos.
+    -> Atualizar os arquivoa de vendas.
+    
+-> Criar programa secundário para gerar, em um arquivo, casos de teste.
