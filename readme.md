@@ -9,9 +9,9 @@
 
 ## **Headers**
 
-    ### *<Products.h>*
+ ### *<Products.h>*
 
-    ### *<Sales.h>*
+ ### *<Sales.h>*
 
         `void unloadCartNode (FILE* salesFile, Sale** cartNode, unsigned long int* date, unsigned long long int* cpf)`
 
@@ -21,7 +21,7 @@
 
         `long int registerSale (Sale** shoppingCart, unsigned long* currentDate, unsigned long long* clientCPF, float* totalBought, float* usedCredit)`
 
-    ### *<Clients.h>*
+ ### *<Clients.h>*
 
         `void updateClient (unsigned long long* clientCPF, long* inClientAdress, long* inSalesAdress, float* totalBought)`
 
@@ -33,22 +33,22 @@
 
         `unsigned long long int askingForCPF (void)`
 
-    ### *<AuxFunctions.h>*
+ ### *<AuxFunctions.h>*
         Aqui serão encontradas funções auxiliares como Limpeza de tela, Limpeza de buffer
 
 ## *Arquivos*
 
-    ### Products.txt
+ ### Products.txt
 
         unsigned long productCode; char* description; double price; unsigned int quantity\n
         %010lu;%s;%010.2lf;%010u\n
 
-    ### Sales.txt
+ ### Sales.txt
 
         unsigned long date; unsigned long long cpf; unsigned long productCode; unsigned int quantity;double price\n
         %lu;%011llu;%lu;%u;%010.2lf\n
       
-    ### Clients.txt
+ ### Clients.txt
 
         unsigned long long cpf; char* name; long firstAdress; unsigned int visits; double total\n
         %011llu;%s;%010ld;%010u;%010.2lf\n
