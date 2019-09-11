@@ -1,3 +1,5 @@
+# Trabalho da Disciplina de Linguagens de Programação I, UNEB
+
 ## *Nomenclatura*
 
     *int* nomeDaVariavel;
@@ -32,18 +34,9 @@
         `unsigned long long int askingForCPF (void)`
 
     ###*<AuxFunctions.h>*
+        Aqui serão encontradas funções auxiliares como Limpeza de tela, Limpeza de buffer
 
-        `void clearScreen (void)`
-
-        `void pauseScreen (void)`
-
-        `void clearBuffer (void)`
-
-        `void checkPointerIntegrity (void* pointer)`
-
-        `void checkFileIntegrity (FILE* file)`
-
-##**Arquivos**
+## *Arquivos*
 
     ###Products.txt
 
@@ -59,4 +52,3 @@
 
         unsigned long long cpf; char* name; long firstAdress; unsigned int visits; double total\n
         %011llu;%s;%010ld;%010u;%010.2lf\n
- 

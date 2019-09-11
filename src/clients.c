@@ -10,6 +10,7 @@
 #include "../includes/clients.h"
 #include "../includes/auxFunctions.h"
 
+
 void updateClient (unsigned long long* clientCPF, long* inClientAdress, long* inSalesAdress, float* totalBought)
 {
     FILE* clientsFile;
@@ -46,68 +47,14 @@ void updateClient (unsigned long long* clientCPF, long* inClientAdress, long* in
     pauseScreen();
 }
 
-void unloadCartNode (Sale** currentNode)
-{   
-    if(!currentNode) return;
-    Sale* auxFree = *currentNode;
-
-    (*currentNode) = (*currentNode)->next;
-    free(auxFree);
-}
-
-void sumPurchaseToProductsFile (FILE* productsFile, Sale* purchaseNode)
-{
-    if (!purchaseNode) return;
-
-    unsigned long tempCode;
-    char tempName[80];
-    double tempPrice;
-    unsigned int tempQnt;
-
-    fseek(productsFile, purchaseNode->inProductsAdress, SEEK_SET);
-    fscanf(productsFile, "%lu;%[^;];%lf;%u\n", &tempCode, tempName, &tempPrice, &tempQnt);
-    fseek(productsFile, purchaseNode->inProductsAdress, SEEK_SET);
-    fprintf(productsFile, "%010lu;%s;%010.2f;%010u\n", tempCode, tempName, tempPrice, tempQnt + purchaseNode->quantity);
-}
-
-long int registerSale (Sale** shoppingCart, unsigned long* currentDate, unsigned long long* clientCPF, float* totalBought, float* usedCredit)
-{   
-    Sale* cartWalker = *shoppingCart;
-    long int inSalesAdress;
-    FILE *salesFile = fopen("../files/sales.txt", "a+"),
-         *productsFile = fopen("../files/products.txt", "rb+");
-    checkFileIntegrity(salesFile);
-    checkFileIntegrity(productsFile);
-
-
-    fseek(salesFile, 0, SEEK_END);
-    inSalesAdress = ftell(salesFile);
-    while (cartWalker)
-    {
-        sumPurchaseToProductsFile (productsFile, cartWalker);
-        fprintf(salesFile, "%lu;%llu;%lu;%u;%010.2f\n", *currentDate, *clientCPF, cartWalker->code, 
-                cartWalker->quantity, cartWalker->price);
-        *totalBought += (cartWalker->quantity * cartWalker->price);
-        unloadCartNode(&cartWalker);
-    }
-
-    if (*usedCredit > 0)
-    {
-        float totalDiscount = -1 * ((*usedCredit / CREDITS_CONVERT_TAX) + *usedCredit);
-        fprintf(salesFile, "%lu;%llu;%d;%u;%010.2f\n", *currentDate, *clientCPF, 0, 1, totalDiscount);
-    }
-    fclose(productsFile);
-    fclose(salesFile);
-    return *clientCPF == ANONYMOUS_CODE ? NOT_EXISTS : inSalesAdress;
-}
-
 /*
-    Procura pelo CPF indicado e retorna o endereço dele no arquivo de clientes.
-    Se o cliente já estiver cadastrado, recupera o endereço da sua primeira compra
-    no arquivo de vendas.
+Procura pelo CPF indicado e retorna o endereço dele no arquivo de clientes.
+Se o cliente já estiver cadastrado, recupera o endereço da sua primeira compra
+no arquivo de vendas.
 */
 long int searchForCPF (unsigned long long int* wantedCPF, long* inSalesAdress)
 {
+
     FILE* clientsFile;
     char ignore[100];
     unsigned long long int tempCPF = 0;
@@ -145,17 +92,6 @@ long int searchForCPF (unsigned long long int* wantedCPF, long* inSalesAdress)
     return inClientsAdress;
 }
 
-// void unloadCartNode (FILE* salesFile, Sale** cartNode, unsigned long int* date, unsigned long long int* cpf)
-// {
-//     if (!cartNode) return;
-
-//     Sale* auxFree = (*cartNode);
-//     fprintf (salesFile, "%lu;%llu;%lu;%d;%2f\n", *date, *cpf, (*cartNode)->code, (*cartNode)->quantity, (*cartNode)->price);
-//     (*cartNode) = (*cartNode)->next;
-//     free(auxFree);
-// }
-
-
 float getUsedCredit (unsigned long long* clientCPF, const long* inSalesAdress)
 {
     unsigned long tempDate, prodCode;
@@ -190,7 +126,6 @@ float getUsedCredit (unsigned long long* clientCPF, const long* inSalesAdress)
     return usedCredit;
 }
 
-
 unsigned long long int askingForCPF (void)
 {
     unsigned long long int clientCPF = ANONYMOUS_CODE;
@@ -201,7 +136,10 @@ unsigned long long int askingForCPF (void)
     {   
         clearScreen();
         printf("Deseja CPF na nota?[y/n]\n");
-        scanf("%c", &answer); clearBuffer();
+
+        getc(stdin);
+        scanf("%c", &answer); 
+        clearBuffer();
         answer = toupper(answer);
         
         if (answer != 'Y' && answer != 'N')
@@ -231,29 +169,6 @@ unsigned long long int askingForCPF (void)
     return clientCPF;
 }
 
-void saleConfirmed (Sale** shoppingCart)
-{
-    unsigned long int currentDate = getCurrentDate(); 
-    unsigned long long int clientCPF = askingForCPF();
-    float totalBought = 0, usedCredit = 0;
-    long int inSalesAdress = 985, inClientsAdress = 985;
-    long newAdress;
-
-
-    inClientsAdress = searchForCPF(&clientCPF, &inSalesAdress);    
-    if (inClientsAdress != NOT_EXISTS && clientCPF != ANONYMOUS_CODE)
-    {
-        usedCredit = getUsedCredit(&clientCPF, &inSalesAdress);
-        totalBought -= usedCredit;
-    }
-    newAdress = registerSale(shoppingCart, &currentDate, &clientCPF, &totalBought, &usedCredit);
-    if (inSalesAdress == NOT_EXISTS)
-        inSalesAdress = newAdress;
-    updateClient(&clientCPF, &inClientsAdress, &inSalesAdress, &totalBought);
-
-    printf("Compra concluida!!\n");
-}
-
 void getMostFrequentClient (void)
 {
 
@@ -265,7 +180,7 @@ void getMostFrequentClient (void)
     
     while (fscanf (clientsFile, "%llu;%[^;];%*d;%d;%*f\n", &clientCPF, ignore, &clientFreq) > 0)
     {
-        if (clientFreq > highestFrequency)
+        if (clientFreq >= highestFrequency)
         {
             highestCPF = clientCPF;
             highestFrequency = clientFreq;
@@ -277,7 +192,8 @@ void getMostFrequentClient (void)
     else
     {
         if (highestCPF == ANONYMOUS_CODE)
-            printf("Parece que as pessoas nao estao se cadastrando muito na sua loja, nao eh mesmo?\n");
+            printf("Pessoas nao cadastradas estao frequentando mais a loja.\n", 
+                "Checar modelo de registro.\n");
         else
             printf("Cliente mais frequente: %lld. Frequencia: %u\n", highestCPF, highestFrequency);
     }
@@ -297,7 +213,7 @@ void getRichestClient (void)
 
     while (fscanf (clientsFile, "%llu;%[^;];%*d;%*d;%lf\n", &clientCPF, ignore, &clientBought) > 0)
     {
-        if (clientBought > highestBought)
+        if (clientBought >= highestBought)
         {
             highestCPF = clientCPF;
             highestBought = clientBought;
@@ -309,7 +225,8 @@ void getRichestClient (void)
     else
     {
         if (highestCPF == ANONYMOUS_CODE)
-            printf("Parece que as pessoas nao estao se cadastrando muito na sua loja, nao eh mesmo?\n");
+            printf("Pessoas nao cadastradas estao comprando mais na loja.\n", 
+                "Checar modelo de registro.\n");
         else
             printf("Cliente mais rico: %lld. Total comprado: %g\n", highestCPF, highestBought);
     }

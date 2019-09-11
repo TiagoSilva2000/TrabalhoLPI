@@ -6,10 +6,25 @@
 #include "../includes/auxFunctions.h"
 #include "../includes/products.h"
 #include "../includes/sales.h"
-#define FOUND_IT 1
 
-// Funcao para pegar produto
-void getProdInfo(unsigned long* prodCode, char* prodName, double* price){
+bool foundProd (FILE *productsFile, unsigned long wantedCode, Sale* product)         //Procura um produto referente a um codigo passado, armazena as informações em
+{
+   unsigned int ignoreQnt;
+   
+   
+   rewind(productsFile);
+   do
+   { product->inProductsAdress = ftell(productsFile); } 
+    while (fscanf(productsFile, "%lu;%[^;];%lf;%u\n", &product->code, product->name, 
+                &product->price, &ignoreQnt) > 0 && product->code != wantedCode);
+    
+    
+    rewind(productsFile);
+    return product->code == wantedCode;
+}
+
+void getProdInfo(unsigned long* prodCode, char* prodName, double* price)
+{
 
     FILE* productsFile = fopen("../files/products.txt", "r");
     checkFileIntegrity(productsFile);
@@ -18,12 +33,13 @@ void getProdInfo(unsigned long* prodCode, char* prodName, double* price){
 
     do
     {    
+        clearScreen();
         do
         {
             printf("Digite o numero do codigo de barras:\n");
             scanf("%10lu", prodCode);
             clearBuffer();
-            if (getProdByCod (productsFile, *prodCode, &tempProduct) == FOUND_IT)
+            if (foundProd (productsFile, *prodCode, &tempProduct) == FOUND_IT)
             {   
                 printf("Codigo do numero ja existe no nosso cadastro!\n");
                 pauseScreen();
@@ -31,18 +47,14 @@ void getProdInfo(unsigned long* prodCode, char* prodName, double* price){
             }
 
         } while (prodCode == 0);
-        //Procura um produto referente a um codigo passado, armazena as informações em);
 
-        // Armazena nome primario e secundario do produto
         printf("Digite o nome do produto:\n");
         scanf("%80[^\n]s", prodName);
         clearBuffer();
 
-        // Armazena price do produto no final da linha e de o \n para descer ate a proxima linha.
         printf("Digite o price do produto:\n");
         scanf("%10lf", price);
 
-        // Confirmacao
         printf("Pressione 1 para confirmar, outro numero para repetir com:\n");
         printf("Codigo: %lu\nNome: %s\nPrice: %.2f\n", *prodCode, prodName, *price);
         scanf("%d", &confirm);
@@ -66,7 +78,6 @@ void createNewProduct (void)
     productsFile = fopen("../files/products.txt", "a+");
     checkFileIntegrity(productsFile);
     
-    // fseek(productsFile, 0, SEEK_END);
     fprintf(productsFile, "%010lu;%s;%010.2f;%010u\n", prodCode, prodName, prodPrice, 0);
     
     clearScreen();
@@ -194,12 +205,11 @@ void updatePrice (void)
                 printf("Digite outro codigo, por favor\n");
             else
                 printf("\nPreco atualizado com sucesso!!!\n");
-        }
             pauseScreen();
-            clearBuffer();
+        }
+        clearBuffer();
     } while (prodAdress == -1 || prodAdress == -2);
-    if (prodCode == 0)
-        printf("\nSAIU\n");
+
 }
 
 void getMostSoldProduct (void)
@@ -230,4 +240,32 @@ void getMostSoldProduct (void)
     
     pauseScreen();
     fclose(productsFile);
+}
+
+void sumPurchaseToProductsFile (FILE* productsFile, Sale* purchaseNode)
+{
+    if (!purchaseNode) return;
+
+    unsigned long tempCode;
+    char tempName[80];
+    double tempPrice;
+    unsigned int tempQnt;
+
+    fseek(productsFile, purchaseNode->inProductsAdress, SEEK_SET);
+    fscanf(productsFile, "%lu;%[^;];%lf;%u\n", &tempCode, tempName, &tempPrice, &tempQnt);
+    fseek(productsFile, purchaseNode->inProductsAdress, SEEK_SET);
+    fprintf(productsFile, "%010lu;%s;%010.2f;%010u\n", tempCode, tempName, tempPrice, tempQnt + purchaseNode->quantity);
+}
+
+void printProduct (Sale *product)
+{
+    if(!product)
+    {
+        printf("Produto nao existe\n");
+        return;
+    }
+
+    printf("\nProduct Code = %lu\n", product->code);
+    printf("Product Name = %s\n", product->name);
+    printf("Product Price = %.2f\n", product->price);
 }

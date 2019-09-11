@@ -2,15 +2,14 @@
 #define SALES_H
 #include <stdbool.h>
 
-    #define START_YEAR 2000
     typedef struct prod Prod;
     typedef struct sale Sale;
 
     struct sale
     {
-        unsigned long code;                 // Codigo do produto
-        char name[100];                     // Quantidade de produtos
-        double price;                       // Preco total do conjunto
+        unsigned long code;                 
+        char name[100];                     
+        double price;                       
         unsigned int quantity;
         long int inProductsAdress;
         Sale *next;
@@ -18,5 +17,14 @@
 
     void sell (void);
     void getIncome (void);
-    bool getProdByCod (FILE *productsFile, unsigned long wantedCode, Sale* product);         //Procura um produto referente a um codigo passado, armazena as informações em
+    bool foundProd (FILE *productsFile, unsigned long wantedCode, Sale* product);
+    long int registerSale (Sale** shoppingCart, unsigned long* currentDate, 
+                            unsigned long long* clientCPF, float* totalBought, float* usedCredit);
+    void saleConfirmed (Sale** shoppingCart);
+    void unloadCartNode (Sale** currentNode);
+    void printSale (Sale **start);
+    void addProductToCart (FILE* productsFile, Sale** saleCart);
+    Sale* RemoveFromCart(Sale **cart);
+    void addSale (Sale *product, size_t quantity, Sale **start);
+
 #endif // SALES_H

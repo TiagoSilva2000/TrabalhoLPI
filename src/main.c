@@ -7,28 +7,7 @@
 #include "../includes/clients.h"
 #include "../includes/products.h"
 #include "../includes/sales.h"
-
-
-
-void interface (void)
-{
-    printf("1 - Cadastrar Produto\n");
-    printf("2 - Vender\n");
-    printf("3 - Gerar Relatorio de Receita\n");
-    printf("4 - Destaques\n");
-    printf("5 - Atualizar Preco\n");
-    printf("985 - Sair\n");
-
-}
-
-void highlightsInterface (void)
-{
-    printf("1 - Produto Mais Vendido\n");
-    printf("2 - Cliente Mais Frequente\n");
-    printf("3 - Cliente que Mais Comprou\n");
-    printf("985 - Sair\n");
-
-}
+#include "../includes/interface.h"
 
 int main (void)
 {
@@ -39,8 +18,9 @@ int main (void)
     while (running)
     {
         clearScreen();
-        interface();
+        mainInterface();
         scanf("%hi", &choice);
+        clearScreen();
 
         if (choice == 1)
             registerproduct();
@@ -56,6 +36,7 @@ int main (void)
                 clearScreen();
                 highlightsInterface();
                 scanf("%hi", &choice);
+                clearScreen();
 
                 if (choice == 1)
                     getMostSoldProduct();

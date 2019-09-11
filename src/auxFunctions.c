@@ -5,14 +5,14 @@
 
 void clearScreen (void)
 {
-    system("cls");
-    // system("clear");
+    // system("cls");
+    system("clear");
     // printf("\e[H\e[2J");
 }
 
 void pauseScreen (void)
-{   
-
+{
+    printf("\nPressione Enter para prosseguir\n");   
     clearBuffer();
     getc(stdin);
     clearBuffer();
@@ -20,12 +20,11 @@ void pauseScreen (void)
 
 void clearBuffer (void)
 {
-    setbuf(stdin, 0);
-
-    /*
-    char c;
-    while ( (c = getc(stdin) != '\n') && c != EOF);
-    */
+    setbuf(stdin, NULL);
+    
+    // char c;
+    // while ( (c = getc(stdin) != '\n') && c != EOF);
+    
 }
 
 void checkPointerIntegrity (void* pointer)
@@ -57,4 +56,55 @@ unsigned long getCurrentDate (void)
     currentTime = localtime(&rawtime);
 
     return ((currentTime->tm_year+1900) * 10000) + ((currentTime->tm_mon + 1) * 100) + (currentTime->tm_mday);
+}
+
+unsigned long getUsersDate (void)
+{
+
+    int year, month, day;
+    unsigned long currentYear = getCurrentDate() / 10000;
+    
+    do
+    {
+        clearScreen();
+        printf("Digite o ano que voce deseja recolher os dados:\n");
+        scanf("%d", &year);
+
+        if (year < START_YEAR || year > currentYear)
+        {
+            printf("Data inserida nao permitida. Insira outra, por favor\n");
+            pauseScreen();
+        }
+    } while (year < START_YEAR || year > currentYear);
+
+
+    do
+    {
+        clearScreen();
+        printf("Digite o mes que voce deseja recolher os dados:\n");
+        scanf("%d", &month);
+        
+        if (month < 1 || month > 12)
+        {
+            printf("Mes inserido em formato nao permitido. Insira novamente, por favor\n");
+            pauseScreen();
+        }
+
+    } while (month < 1 || month > 12);
+    
+    do
+    {    
+        clearScreen();
+        printf("Digite o dia que voce deseja recolher os dados:\n");
+        scanf("%d", &day);
+        if (day < 0 || day > 30)
+        {
+            printf("Dia inserido em formato nao permitido. Insira novamente, por favor\n");
+            pauseScreen();
+        }
+    } while (day < 0 || day > 30);
+
+
+    clearScreen();
+    return (year * 10000) + (month * 100) + (day);
 }

@@ -2,119 +2,258 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include "../includes/auxFunctions.h"
 #include "../includes/sales.h"
 #include "../includes/clients.h"
+#include "../includes/interface.h"
+#include "../includes/products.h"
 
-/*
-Pedir codigo do produto
-Buscar pelo codigo no produos.txt
-Pegar as informacoes do produto
-Guardar em um struct produto
-Guardar esse produto num carrinho
-*/
-
-bool getProdByCod (FILE *productsFile, unsigned long wantedCode, Sale* product)         //Procura um produto referente a um codigo passado, armazena as informações em
+void sell (void)
 {
-   unsigned int ignoreQnt;
-    /*
+    FILE *productsFile = fopen("../files/products.txt", "rb+");
+    Sale *saleCart = NULL;
+    char op = '1';
 
-        Ler o primeiro unsigned long
-        Comparar com cod
-        Se for diferente
-            Anda até o \n
-            Anda mais um pra ficar no inicio da proxima linha
-        Se for igual
-            Pega as outras informações e guarda num prod novo
-            retorna esse prod
-        Se terminar e não achar, retorna NULL
-    */
-   rewind(productsFile);
-   do
-   {
-       product->inProductsAdress = ftell(productsFile);
-   } while (fscanf(productsFile, "%lu;%[^;];%lf;%u\n", &product->code, product->name, &product->price, &ignoreQnt) > 0 
-            && product->code != wantedCode);
+
+    while (op != '0')
+    {
+        clearScreen();
+        
+        sellInterface();
+        clearBuffer();
+        scanf("%c", &op);
+        clearBuffer();
+
+        clearScreen();
+        
+        if (op == '1')
+            printSale(&saleCart);
+        else if (op == '2')
+            addProductToCart(productsFile, &saleCart);
+        else if (op == '3')
+            RemoveFromCart(&saleCart);
+        else if (op == '0')
+            if (saleCart != NULL) saleConfirmed(&saleCart);
+        else
+            printf("\nOpcao invalida\n");
+
+        getc(stdin);
+        pauseScreen();
+    }
     
-    
-    rewind(productsFile);
-    
-    return product->code == wantedCode;
+    fclose (productsFile);
 }
 
-unsigned long getCode()
+void printSale (Sale **start)
 {
-    //Digite o codigo do produto
-    clearScreen();
-    printf("======================================\n");
-    printf("=                                    =\n");
-    printf("=     DIGITE O CODIGO DO PRODUTO     =\n");
-    printf("=            0 para Sair             =\n");
-    printf("======================================\n");
+    Sale *curNode = *start;
 
-    unsigned long prodCod;
-    scanf("%lu", &prodCod);
+    if (!(*start))
+    {
+        printf("Carrinho vazio\n");
+        return;
+    }
 
-    return prodCod;
+    while(curNode != NULL)
+    {
+        printf("%lu - %u - %s - %.2f\n", curNode->code, curNode->quantity, 
+                                        curNode->name, curNode->price * curNode->quantity);
+        curNode = curNode->next;
+    }
 }
 
-size_t GetQuantity()
+void addProductToCart (FILE* productsFile, Sale** saleCart)
 {
-    //Digite a quantidade
+    char validation = 'n';
+    Sale tempProd;
+    unsigned long int prodCode;
+    unsigned int tempQnt = 0;
 
-    size_t prodQuant;
+
+
+    do
+    {
+        clearScreen(); clearBuffer();
+        prodCodeInterface();
+        scanf("%lu", &prodCode);
+        if (prodCode == I_WANT_TO_EXIT) return;
+
+
+        clearScreen();
+        if(foundProd(productsFile, prodCode, &tempProd))
+        {
+            do
+            {
+                clearScreen(); clearBuffer();
+                printProduct(&tempProd);
+                
+                printf("\nEsse eh o produto? (s/n)\n");
+                validation = tolower(getc(stdin));
+
+                if (validation != 'n' && validation != 's')
+                {
+                    printf("Opcao invalida\n");
+                    pauseScreen();
+                }
+
+            } while(validation != 'n' && validation != 's');
+        }
+        else
+        {
+            clearScreen();
+            printf("Codigo Invalido\nPressione Enter para retornar\n");
+            pauseScreen();
+        }
+    } while(validation != 's');
+
+    if (validation == 's')
+    {
+        clearScreen();
+        prodQntInterface();
+        scanf("%u", &tempQnt);
+        if (tempQnt > 0)
+            addSale(&tempProd, tempQnt, saleCart);
+    }
+        
+    printf("Produto %s\n", tempQnt > 0 ? "adicionado com sucesso" : "nao adicionado");
+
+}
+
+Sale* RemoveFromCart(Sale **cart)
+{
+    size_t quantity;
+    unsigned long cod;
+    Sale *currentSale = *cart, *prev = NULL;
+    bool wrongQuantity = true;
+
+
+    if(!*cart)
+    {
+        printf("Carrinho vazio\n");
+        return NULL;
+    }
+
     do
     {
         clearScreen();
-        printf("======================================\n");
-        printf("=                                    =\n");
-        printf("=                                    =\n");
-        printf("=   DIGITE A QUANTIDADE DO PRODUTO   =\n");
-        printf("=                                    =\n");
-        printf("=                                    =\n");
-        printf("=      Pressione 0 para Cancelar     =\n");
-        printf("======================================\n");
+        prodCodeInterface();
+        printSale(cart);
+        scanf("%lu", &cod);
+    } while (cod <  0);
 
-        if (prodQuant < 0)
+    if (cod == I_WANT_TO_EXIT)
+        return NULL;
+    
+    while(currentSale && currentSale->code != cod)
+    {
+        prev = currentSale;
+        currentSale = currentSale->next;
+    }
+
+    if(!currentSale)
+    {
+        printf("Codigo do produto nao esta no carrinho\n");
+        return NULL;
+    }
+    
+    do
+    {
+        prodQntInterface();
+        scanf("%lu", &quantity);
+        if(quantity > currentSale->quantity)
         {
-            printf("Quantidade invalida! Insira uma quantidade valida, por favor.\n");
+            printf("Nao existem tantos produtos com este codigo no carrinho\n\n");
+            printf("Digite outro codigo\n");
             pauseScreen();
         }
-    scanf("%lu", &prodQuant);
-    } while (prodQuant < 0);
+        else
+        {
+            wrongQuantity = false;
+            if(quantity == currentSale->quantity)
+            {
+                if(currentSale == *cart) 
+                    *cart = (*cart)->next;
+                else 
+                    prev->next = currentSale->next;
+                free(currentSale);
+            }
+            else
+                currentSale->quantity -= quantity;
+        }
+    } while (wrongQuantity);
 
-    return prodQuant;
+    return currentSale;
+}
+
+void saleConfirmed (Sale** shoppingCart)
+{
+    float totalBought = 0, usedCredit = 0;
+    long int inSalesAdress = 985, inClientsAdress = 985;
+    long newAdress;
+    unsigned long int currentDate = getCurrentDate(); 
+    unsigned long long int clientCPF = askingForCPF();
+
+
+
+    inClientsAdress = searchForCPF(&clientCPF, &inSalesAdress);
+    if (inClientsAdress != NOT_EXISTS && clientCPF != ANONYMOUS_CODE)
+    {
+        usedCredit = getUsedCredit(&clientCPF, &inSalesAdress);
+        totalBought -= usedCredit;
+    }
+    newAdress = registerSale(shoppingCart, &currentDate, &clientCPF, &totalBought, &usedCredit);
+    if (inSalesAdress == NOT_EXISTS)
+        inSalesAdress = newAdress;
+    updateClient(&clientCPF, &inClientsAdress, &inSalesAdress, &totalBought);
+
+    printf("Compra concluida!!\n");
+}
+
+long int registerSale (Sale** shoppingCart, unsigned long* currentDate, 
+                    unsigned long long* clientCPF, float* totalBought, float* usedCredit)
+{   
+    Sale* cartWalker = *shoppingCart;
+    long int inSalesAdress;
+    FILE *salesFile = fopen("../files/sales.txt", "a+"),
+         *productsFile = fopen("../files/products.txt", "rb+");
+    checkFileIntegrity(salesFile);
+    checkFileIntegrity(productsFile);
+
+
+    fseek(salesFile, 0, SEEK_END);
+    inSalesAdress = ftell(salesFile);
+    while (cartWalker)
+    {
+        sumPurchaseToProductsFile (productsFile, cartWalker);
+        fprintf(salesFile, "%lu;%llu;%lu;%u;%010.2f\n", *currentDate, *clientCPF, cartWalker->code, 
+                cartWalker->quantity, cartWalker->price);
+        *totalBought += (cartWalker->quantity * cartWalker->price);
+        unloadCartNode(&cartWalker);
+    }
+
+    if (*usedCredit > 0)
+    {
+        float totalDiscount = -1 * ((*usedCredit / CREDITS_CONVERT_TAX) + *usedCredit);
+        fprintf(salesFile, "%lu;%llu;%d;%u;%010.2f\n", *currentDate, *clientCPF, 0, 1, totalDiscount);
+    }
+
+    fclose(productsFile);
+    fclose(salesFile);
+    return *clientCPF == ANONYMOUS_CODE ? NOT_EXISTS : inSalesAdress;
 }
 
 void addSale (Sale *product, size_t quantity, Sale **start)
 {
-    /*
-    Pedir um codigo
-    Procurar pelo produto
-    Validar o produto
-    Guardar o produto
-    Guardar o codigo do produto no Node
-
-    Pedir a quantidade
-    Guardar a quantidade no Node
-
-    Multiplicar a quantidade pelo preço
-    Guardar o preço no Node
-
-    Adicionar esse node a uma lista
-    */
     Sale *newSet = (Sale*) malloc(sizeof(Sale));
     checkPointerIntegrity(newSet);
 
-    newSet->code = product->code;
-    newSet->price = product->price;
-    newSet->inProductsAdress = product->inProductsAdress;
-    strcpy(newSet->name, product->name);
+    *newSet = *product;
     newSet->quantity = quantity;
     newSet->next = NULL;
 
-    if(!*start) 
-        *start = newSet;                                              //Carrinho vazio, adiciona no inicio
+    if(!*start)
+        *start = newSet;
     else
     {
         Sale* currentSale = *start;
@@ -123,339 +262,46 @@ void addSale (Sale *product, size_t quantity, Sale **start)
             currentSale = currentSale->next;
     
         if (currentSale->next == NULL && product->code != currentSale->code)
-            currentSale->next = newSet;                                             //Coloca no final
+            currentSale->next = newSet;
         else
             currentSale->quantity += quantity;
-    }                                                                    //Tem coisa no carrinho
+    }
 }
 
-Sale* RemoveFromCart(Sale **cart)
+void unloadCartNode (Sale** currentNode)
+{   
+    if(!currentNode) return;
+    Sale* auxFree = *currentNode;
+
+    (*currentNode) = (*currentNode)->next;
+    free(auxFree);
+}
+
+void getIncome (void) 
 {
-    /*
-    Pedir o codigo do produto a ser removido
-    Procurar o produto no carrinho pelo codigo
-        Pegar um produto no carrinho
-        Comparar o codigo com o do produto
-        Se o codigo for igual
-            Retirar ele
-        Se o codigo for diferente
-            Ir para o proximo produto
-    Remover o produto do carrinho
-    */
-
-    if(!*cart)
-    {
-        printf("\nCarrinho vazio\n");
-        pauseScreen();
-        return NULL;
-    }
-
-    size_t quantity;
-    unsigned long cod = getCode();
-    if (cod == 0)
-        return NULL;
-    
-
-    //Procurar produto
-    Sale *currentSale = *cart, *prev = NULL;
-    while(currentSale && currentSale->code != cod)
-    {
-        prev = currentSale;
-        currentSale = currentSale->next;
-    }
-
-    //Produto não encontrado
-    if(!currentSale)
-    {
-        printf("Codigo do produto nao esta no carrinho");
-        pauseScreen();
-        return NULL;
-    }
-    //Retirar o produto encontrado
-    else
-    {   
-        bool wrongQuantity = true;
-        while (wrongQuantity)
-        { 
-            /*
-            Pegar a quantidade
-            Checar se a quantidade é maior que a de produtos nessa sale
-            Se a quantidade for MAIOR que a quantidade de produtos nessa Sale
-                Retornar erro de quantidade
-                Volta pra pedir a quantidade
-            Senão se a quantidade for IGUAL a quantidade de produtos nessa Sale
-                Retirar o node da Sale
-            Senão se a quantidade for MENOR a quantidade de produtos nessa Sale
-                Diminuir a quantidade
-                Diminuir o preço
-                    Verificar o preço original desse produto
-                    Diminuir do total da Sale
-            Tirar produto
-            */
-
-            quantity = GetQuantity();
-            if(quantity > currentSale->quantity)
-            {
-                //Retorna erro de quantidade
-                printf("Nao existem tantos produtos com este codigo no carrinho\n\n");
-                printf("Digite outro codigo\n");
-                pauseScreen();
-            }
-            else
-            {
-                if(quantity == currentSale->quantity)
-                {
-                    //Se estiver no começo
-                    if(currentSale == *cart) *cart = currentSale->next;
-
-                    //Se estiver no meio ou no final
-                    else prev->next = currentSale->next;
-                }
-                else
-                    currentSale->quantity -= quantity;
-                wrongQuantity = false;
-            }
-        }
-        
-    }
-
-    pauseScreen();
-    return(currentSale);
-}
-
-void printProduct(Sale *product)
-{
-
-    if(!product)
-    {
-        printf("Produto nao existe");
-        return;
-    }
-
-    printf("\nProduct Code = %lu\n", product->code);
-    printf("Product Name = %s\n", product->name);
-    printf("Product Price = %.2f\n", product->price);
-}
-
-void printSale (Sale **start)
-{
-
-    if (!(*start))
-    {
-        printf("Carrinho vazio\n");
-        pauseScreen();
-        pauseScreen();
-        return;
-    }
-
-    Sale *curNode = *start;
-    while(curNode != NULL)
-    {
-        printf("%lu - %u - %s - %.2f\n", curNode->code, curNode->quantity, curNode->name, curNode->price * curNode->quantity);
-        curNode = curNode->next;
-    }
-    pauseScreen();
-    pauseScreen();
-}
-
-void printSellMenu()
-{
-    clearScreen();
-    printf("======================================\n");
-    printf("=                                    =\n");
-    printf("=           MENU DE VENDAS           =\n");
-    printf("=                                    =\n");
-    printf("= - SELECIONE UMA OPCAO              =\n");
-    printf("=                                    =\n");
-    printf("= 1 - MOSTRAR O CARRINHO             =\n");
-    printf("= 2 - ADICIONAR PRODUTO AO CARRINHO  =\n");
-    printf("= 3 - REMOVER PRODUTO DO CARRINHO    =\n");
-    printf("= 0 - FINALIZAR A COMPRA             =\n");
-    printf("=                                    =\n");
-    printf("======================================\n");
-}
-
-
-void addProductToCart (FILE* productsFile, Sale** saleCart)
-{
- 
-    char validation = 'n';
-    Sale tempProd;
-    unsigned long int prodCode;
-    unsigned int tempQnt;
-
-    while(validation == 'n' && ((prodCode = getCode()) != 0))                                //Ciclo de validação do produto
-    {
-        clearScreen();        //Pede um codigo de produto e procura ele por esse codigo
-
-        if(getProdByCod(productsFile, prodCode, &tempProd))                                            //Se o produto foi encontrado
-        {
-            do
-            {
-                clearScreen();
-                printProduct(&tempProd);                                 //Mostra o produto
-                printf("\nEsse eh o produto? (y/n)");                   //Pede confirmação
-                scanf(" %c",&validation);
-
-                if (validation != 'n' && validation != 'y')
-                {
-                    clearScreen();
-                    printf("Opcao invalida\n");                                 //Informa o erro
-                    pauseScreen();
-                }
-
-            } while(validation != 'n' && validation != 'y');              //Se digitar algo não permitido           
-        }
-        else                                                    //Se o produto não foi encontrado
-        {
-            clearScreen();
-            printf("\nCodigo Invalido\n");
-            pauseScreen();
-        }
-    }
-    if (validation == 'y')
-    {
-        tempQnt = GetQuantity();
-        if (tempQnt > 0)
-            addSale(&tempProd, tempQnt, saleCart);
-    }
-}
-
-
-void sell (void)
-{
-    FILE *productsFile = fopen("../files/products.txt", "rb+");
-    Sale *saleCart = NULL;
-    char op = '1';
-
-    //Update
-    while(op != '0')
-    {
-        clearScreen();
-
-        printSellMenu();
-
-        clearBuffer();
-        scanf("%c", &op);
-        clearBuffer();
-
-        switch (op)
-        {
-            //mostrar carrinho
-            case '1':
-            {
-                printSale(&saleCart);
-                break;
-            }
-            //adicionar produto ao carrinho
-            case '2':
-            {
-                addProductToCart(productsFile, &saleCart);
-                break;
-            }
-            case '3':     //remover produto do carrinho
-            {
-                RemoveFromCart(&saleCart);
-                break;
-            }
-            case '0':     //sair
-            {
-                saleConfirmed (&saleCart);
-                break;
-            }
-            default:    //opção invalida
-            {
-                clearScreen();
-                printf("\nOpcao invalida\n");
-                pauseScreen();
-                break;
-            }
-        }
-    }
-
-    fclose (productsFile);
-}
-
-// Uma função pra receber uma currentDate e retornar ela formatada no formato do salesFile.
-unsigned long getFormattedDate (void) {
-
-    int year, month, day = 0;
-    unsigned long currentYear = getCurrentDate() / 10000; // extraindo ano da data formatada.
-    
-    do
-    {
-        clearScreen();
-        printf("Digite o ano que voce deseja recolher os dados:\n");
-        scanf("%d", &year);
-
-        if (year < START_YEAR || year > currentYear)
-        {
-            printf("Data inserida nao permitida. Insira outra, por favor\n");
-            pauseScreen();
-        }
-    } while (year < START_YEAR || year > currentYear);
-
-
-    do
-    {
-        clearScreen();
-        printf("Digite o mes que voce deseja recolher os dados:\n");
-        scanf("%d", &month);
-        
-        if (month < 1 || month > 12)
-        {
-            printf("Mes inserido em formato nao permitido. Insira novamente, por favor\n");
-            pauseScreen();
-        }
-
-    } while (month < 1 || month > 12);
-    
-    do
-    {    
-        clearScreen();
-        printf("Digite o dia que voce deseja recolher os dados:\n");
-        scanf("%d", &day);
-        if (day < 0 || day > 30)
-        {
-            printf("Dia inserido em formato nao permitido. Insira novamente, por favor\n");
-            pauseScreen();
-        }
-    } while (day < 0 || day > 30);
-
-
-    clearScreen();
-    return (year * 10000) + (month * 100) + (day);
-}
-
-void getIncome (void) {
 
     unsigned long startPoint, endPoint = 0;
     float currentPrice, income = 0;
     unsigned long int currentDate = 0, currentProdCode;
-    unsigned int currentQnt = 0; // Variaveis apenas para leitura
+    unsigned int currentQnt = 0;
     unsigned long long int cpf;
-
-    // Abrir os arquivos, inclusive o tempor�rio
     FILE *salesFile = fopen("../files/sales.txt", "r");
-    FILE *tempFile = tmpfile();
+    checkFileIntegrity(salesFile);
 
 
-    //Validação de ambos os arquivos
-    if(tempFile == NULL || salesFile == NULL){
-        exit(1);
-    }
 
-    // Guardar esses valores em uma variável
-    startPoint = getFormattedDate();
-    endPoint = getFormattedDate();
+    printf("Dica:\nData de comeco da empresa:%i  Data atual: %lu\n", START_YEAR, getCurrentDate());
+    pauseScreen();
+
+    startPoint = getUsersDate();
+    endPoint = getUsersDate();
 
 
     while(fscanf(salesFile, "%lu;%lu;%llu;%u;%f", &currentDate, &currentProdCode, &cpf, &currentQnt, &currentPrice) > 0)
         if(currentDate >= startPoint && currentDate <= endPoint)
             income += (currentPrice * currentQnt);
 
-    fprintf(tempFile, "(%lu -> %lu) %.2f\n", startPoint, endPoint, income);
     printf("\n\nDe %lu a %lu, a receita eh de %.2f\n\n\n", startPoint, endPoint, income);
 
-    pauseScreen();
+    fclose(salesFile);
 }
