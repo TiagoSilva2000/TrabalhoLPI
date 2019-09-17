@@ -26,5 +26,6 @@
     void addProductToCart (FILE* productsFile, Sale** saleCart);
     Sale* RemoveFromCart(Sale **cart);
     void addSale (Sale *product, size_t quantity, Sale **start);
+    void cancelSale (Sale** shoppingCart);
 
 #endif // SALES_H

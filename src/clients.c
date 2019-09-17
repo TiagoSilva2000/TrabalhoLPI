@@ -25,7 +25,7 @@ void updateClient (unsigned long long* clientCPF, long* inClientAdress, long* in
     checkFileIntegrity(clientsFile);
 
     clearBuffer();
-    if (*inClientAdress == -1)
+    if (*inClientAdress == NOT_EXISTS)
     {
         printf("Insira seu nome: "); scanf("%80[^\n]", clientName);
         fseek(clientsFile, 0, SEEK_END);
@@ -192,8 +192,8 @@ void getMostFrequentClient (void)
     else
     {
         if (highestCPF == ANONYMOUS_CODE)
-            printf("Pessoas nao cadastradas estao frequentando mais a loja.\n", 
-                "Checar modelo de registro.\n");
+            printf("Pessoas nao cadastradas estao frequentando mais a loja.\n"
+                    "Checar modelo de registro.\n");
         else
             printf("Cliente mais frequente: %lld. Frequencia: %u\n", highestCPF, highestFrequency);
     }
@@ -225,10 +225,10 @@ void getRichestClient (void)
     else
     {
         if (highestCPF == ANONYMOUS_CODE)
-            printf("Pessoas nao cadastradas estao comprando mais na loja.\n", 
-                "Checar modelo de registro.\n");
+            printf("Pessoas nao cadastradas estao comprando mais na loja.\n" 
+                    "Checar modelo de registro.\n");
         else
-            printf("Cliente mais rico: %lld. Total comprado: %g\n", highestCPF, highestBought);
+            printf("Cliente que mais comprou: %lld. Total comprado: %g\n", highestCPF, highestBought);
     }
 
     pauseScreen();

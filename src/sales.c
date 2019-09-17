@@ -16,7 +16,7 @@ void sell (void)
     char op = '1';
 
 
-    while (op != '0')
+    while (op != '0' && op != '4')
     {
         clearScreen();
         
@@ -33,8 +33,10 @@ void sell (void)
             addProductToCart(productsFile, &saleCart);
         else if (op == '3')
             RemoveFromCart(&saleCart);
-        else if (op == '0')
+        else if (op == '4')
             if (saleCart != NULL) saleConfirmed(&saleCart);
+        else if (op == '0')
+            cancelSale(saleCart);
         else
             printf("\nOpcao invalida\n");
 
@@ -209,6 +211,20 @@ void saleConfirmed (Sale** shoppingCart)
 
     printf("Compra concluida!!\n");
 }
+
+void cancelSale (Sale** shoppingCart)
+{
+    Sale* auxFree = *shoppingCart;
+    while (*shoppingCart)
+    {
+        auxFree = *shoppingCart;
+        (*shoppingCart) = (*shoppingCart)->next;
+        free(auxFree);
+    }
+
+    free(shoppingCart);
+}
+
 
 long int registerSale (Sale** shoppingCart, unsigned long* currentDate, 
                     unsigned long long* clientCPF, float* totalBought, float* usedCredit)

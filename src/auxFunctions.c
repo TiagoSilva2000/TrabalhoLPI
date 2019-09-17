@@ -20,11 +20,7 @@ void pauseScreen (void)
 
 void clearBuffer (void)
 {
-    setbuf(stdin, NULL);
-    
-    // char c;
-    // while ( (c = getc(stdin) != '\n') && c != EOF);
-    
+    setbuf(stdin, NULL);    
 }
 
 void checkPointerIntegrity (void* pointer)

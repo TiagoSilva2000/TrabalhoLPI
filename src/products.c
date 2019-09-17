@@ -55,7 +55,8 @@ void getProdInfo(unsigned long* prodCode, char* prodName, double* price)
         printf("Digite o price do produto:\n");
         scanf("%10lf", price);
 
-        printf("Pressione 1 para confirmar, outro numero para repetir com:\n");
+        clearScreen(); clearBuffer();
+        printf("Pressione 1 para confirmar ou outro numero para corrigir com:\n");
         printf("Codigo: %lu\nNome: %s\nPrice: %.2f\n", *prodCode, prodName, *price);
         scanf("%d", &confirm);
 
@@ -108,7 +109,6 @@ void registerproduct (void)
         
     } while (option != 0);
 
-    printf("\nSAIU!\n");
 }
 
 long int searchProductAndModify (unsigned long wantedCode, double newPrice)
@@ -141,15 +141,15 @@ long int searchProductAndModify (unsigned long wantedCode, double newPrice)
         clearScreen();
         printf("Informacoes sobre o produto:\n1-Codigo:%lu\n2-Decricao:%s\n3-Preco/Novo Preco:%g / %g\n4-Quantidade ja vendida:%u\n",
                 cmpCode, tempName, tempPrice, newPrice, tempQnt);
-        printf("Voce realmente deseja alterar esse produto?[y/n]"); scanf("%c", &choice);
+        printf("Voce realmente deseja alterar esse produto?[s/n]"); scanf("%c", &choice);
         choice = toupper(choice);
 
-        if (choice != 'Y' && choice != 'N')
+        if (choice != 'S' && choice != 'N')
         {
             printf("Codigo invalido. Digite outro, por favor\n");
             pauseScreen();
         }
-    } while (choice != 'Y' && choice != 'N');
+    } while (choice != 'S' && choice != 'N');
     
     if (choice == 'N')
         return -2;
@@ -215,21 +215,21 @@ void updatePrice (void)
 void getMostSoldProduct (void)
 {
     FILE* productsFile;
-    unsigned int highestQnt = 0, cmpQnt;
+    unsigned int highestQnt = 0, qntToCmp = 0;
     unsigned long highestCode, cmpCode;
-    char ignore[80], highestName[80];
+    char wealthiestName[80], highestName[80];
     double ignorePrice;
 
     productsFile = fopen("../files/products.txt", "r");
     checkFileIntegrity(productsFile);
 
-    while (fscanf (productsFile, "%lu;%[^;];%lf;%u\n", &cmpCode, ignore, &ignorePrice,  &cmpQnt) > 0)
+    while (fscanf (productsFile, "%lu;%[^;];%lf;%u\n", &cmpCode, wealthiestName, &ignorePrice,  &qntToCmp) > 0)
     {
-        if (cmpQnt > highestQnt)
+        if (qntToCmp > highestQnt)
         {
             highestCode = cmpCode;
-            highestQnt = cmpQnt;
-            strcpy(highestName, ignore);
+            highestQnt = qntToCmp;
+            strcpy(highestName, wealthiestName);
         }
     }
 
